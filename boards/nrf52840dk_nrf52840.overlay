@@ -1,0 +1,12 @@
+&i2c0 {
+    status = "okay";
+    sda-pin = <26>;
+    scl-pin = <27>;
+
+    veml6040@10 {
+        compatible = "vishay,veml6040";
+        reg = <0x10>;
+        label = "VEML6040";
+        status = "okay";
+    };
+};

@@ -1,0 +1,7 @@
+{
+    "C_Cpp.default.compilerPath": "C:/Users/ainae/.platformio/packages/toolchain-gccarmnoneeabi/bin/arm-none-eabi-gcc.exe",
+    "files.associations": {
+        "*.dbclient-js": "javascript",
+        "device.h": "c"
+    }
+}
