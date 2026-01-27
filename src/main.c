@@ -18,19 +18,55 @@ LOG_MODULE_REGISTER(veml_ble, LOG_LEVEL_INF);
 
 // Constants del sensor
 #define VEML6040_I2C_ADDR  0x10
-#define VEML6040_CONF      0x03
+#define VEML6040_CONF      0x00
 #define VEML6040_RED       0x08
 #define VEML6040_GREEN     0x09
 #define VEML6040_BLUE      0x0A
 #define VEML6040_WHITE     0x0B
 
+// Constants led
+#define PCA9554_I2C_ADDR 0x27 
+#define PCA9554_REG_INPUT   0x00
+#define PCA9554_REG_OUTPUT  0x01
+#define PCA9554_REG_POLINV  0x02
+#define PCA9554_REG_CONFIG  0x03
+
 static const struct device *i2c_dev;
 static uint8_t color_data[8]; // R,G,B,W (2 bytes cadascun)
+
+// led
+static const uint8_t llum[8] = {0x00, 0x10, 0x20, 0x40, 0x80, 0x30, 0x50, 0x90};
 
 #define BT_UUID_COLOR_SERVICE   BT_UUID_DECLARE_128(BT_UUID_128_ENCODE(0x12345678,0x1234,0x5678,0x1234,0x56789abcdef0))
 #define BT_UUID_COLOR_CHAR      BT_UUID_DECLARE_128(BT_UUID_128_ENCODE(0xabcdef01,0x2345,0x6789,0xabcd,0xef0123456789))
 
 static bool notify_enabled = false;
+
+static int pca9554_init(void)
+{
+    uint8_t buf[2];
+
+    // CONFIG = 0x03, valor 0x00 -> tots els pins com a sortida
+    buf[0] = PCA9554_REG_CONFIG;
+    buf[1] = 0x00;
+
+    if (i2c_write(i2c_dev, buf, 2, PCA9554_I2C_ADDR) < 0) {
+        LOG_ERR("Error inicialitzant PCA9554", "Error");
+        return -1;
+    }
+
+    LOG_INF("PCA9554 inicialitzat (tots els pins com a sortida)", "Inf");
+    return 0;
+}
+
+static void pca9554_write_port(uint8_t value)
+{
+    uint8_t buf[2];
+    buf[0] = PCA9554_REG_OUTPUT;
+    buf[1] = value;
+
+    i2c_write(i2c_dev, buf, 2, PCA9554_I2C_ADDR);
+}
 
 static void color_ccc_cfg_changed(const struct bt_gatt_attr *attr, uint16_t value)
 {
@@ -89,7 +125,7 @@ static int veml6040_init(void)
         return -1;
     }
 
-    uint8_t cmd[3] = { VEML6040_CONF, 0x00, 0x00 };
+    uint8_t cmd[3] = { VEML6040_CONF, 0x50, 0x00 };
     if (i2c_write(i2c_dev, cmd, sizeof(cmd), VEML6040_I2C_ADDR) < 0) {
         LOG_ERR("Error configurant el sensor VEML6040", "Error");
         return -1;
@@ -138,6 +174,7 @@ void main(void)
     LOG_INF("Inicialitzant VEML6040 + BLE...", "Inf");
 
     if (veml6040_init() < 0 ) return;
+    if( pca9554_init() < 0 ) return;
 
     int err = bt_enable(bt_ready);
     if (err) {
@@ -145,17 +182,32 @@ void main(void)
         return; 
     } 
 
+    uint8_t led_index = 0;
+
     while (1)
     {
+        // 1. Escriure patró de LED al PCA9554
+        // pca9554_write_port(llum[led_index]);
+        pca9554_write_port(llum[0]);
+
+        LOG_INF("LED PCA9554 activat: 0x%02X", llum[0]);
+        
+        // k_sleep(K_MSEC(1500));
+
+        //2. LLegir colors del VEML6040 
+
         veml6040_read_colors();
+
+        //3. Norificar per BLE si està activat
         if(notify_enabled) {
             bt_gatt_notify(NULL, &color_svc.attrs[1], color_data, sizeof(color_data));
         }
-        k_sleep(K_SECONDS(1));
+
+        // 4. Actualitzar índex del LED
+        // led_index = (led_index + 1) % ARRAY_SIZE(llum);
+        k_sleep(K_SECONDS(3));
     }
     
     
 
 }
-    
-   

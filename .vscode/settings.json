@@ -3,6 +3,7 @@
     "files.associations": {
         "*.dbclient-js": "javascript",
         "device.h": "c",
-        "kernel.h": "c"
+        "kernel.h": "c",
+        "i2c.h": "c"
     }
 }

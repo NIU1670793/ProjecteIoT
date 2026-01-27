@@ -1,10 +1,10 @@
-// /* main.c - Application main entry point */
+ /* main.c - Application main entry point */
 
-// /*
-//  * Copyright (c) 2015-2016 Intel Corporation
-//  *
-//  * SPDX-License-Identifier: Apache-2.0
-//  */
+/*
+ * Copyright (c) 2015-2016 Intel Corporation
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 // #include <zephyr/types.h>
 // #include <stddef.h>
